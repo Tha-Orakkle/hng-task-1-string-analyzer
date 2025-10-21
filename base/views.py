@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from decimal import Decimal
@@ -13,6 +14,13 @@ from .exceptions import InvalidQueryParamsException, UnprocessableEntityExceptio
 from .filters import StringsFilter
 from .models import String
 from .serializers import StringSerializer
+from .swaggger import (
+    create_string_schema,
+    get_string_schema,
+    get_strings_list_schema,
+    get_string_list_natural_language,
+    delete_string_schema
+)
 
 VOWELS = {
     'first': 'a',
@@ -45,18 +53,19 @@ class ListCreateStringView(APIView):
                 for k, v in filterset.form.cleaned_data.items()
                 if v not in [None, '']
             }
-            print(f"APLLIED FILTERS: {self.applied_filters}")
         else:
             raise InvalidQueryParamsException()
             
         return queryset
 
+    @extend_schema(**create_string_schema)
     def post(self, request):
         serializer = StringSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(**get_strings_list_schema)
     def get(self, request):
         qs = self.get_queryset()
         serializers = StringSerializer(qs, many=True)
@@ -86,6 +95,14 @@ class RetrieveDeleteView(generics.RetrieveDestroyAPIView):
             return super().get_object()
         except Http404:
             raise NotFound("String does not exist in the system")
+        
+    @extend_schema(**get_string_schema)
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @extend_schema(**delete_string_schema)
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
 
 
 @method_decorator(ratelimit(key='ip', rate='50/h', block=False), name='dispatch')
@@ -141,6 +158,7 @@ class NaturalLanguageFilterView(APIView):
         
         return filters
     
+    @extend_schema(**get_string_list_natural_language)
     def get(self, request):
         query = request.query_params.get('query', '').strip().lower()
         if not query:

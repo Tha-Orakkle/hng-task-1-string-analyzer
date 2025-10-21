@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     
     # third party apps
     'corsheaders',
+    'drf_spectacular',
     
     # local apps
     'base',
@@ -135,5 +136,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny'
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': []
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
 }
