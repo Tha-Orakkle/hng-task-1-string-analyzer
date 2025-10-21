@@ -14,4 +14,8 @@ class UnprocessableEntityException(APIException):
 
 class MissingValueException(APIException):
     status_code = status.HTTP_400_BAD_REQUEST
-    default_detail = " Invalid request body or missing 'value' field"
+    default_detail = "Invalid request body or missing 'value' field"
+
+class InvalidQueryParamsException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Invalid query parameter values or types"
