@@ -1,5 +1,7 @@
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 from decimal import Decimal
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from rest_framework import status, generics
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -21,9 +23,17 @@ VOWELS = {
 }
 
 
+@method_decorator(ratelimit(key='ip', rate='50/h', block=False), name='dispatch')
 class ListCreateStringView(APIView):
     filterset_class = StringsFilter
     
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request, 'limited', False):
+            return JsonResponse({
+                'detail': 'Too many requests.'
+            }, status=429)
+        return super().dispatch(request, *args, **kwargs)
+        
     def get_queryset(self):
         queryset = String.objects.all().order_by('-created_at')
         filterset = self.filterset_class(self.request.GET, queryset=queryset)
@@ -57,11 +67,19 @@ class ListCreateStringView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+@method_decorator(ratelimit(key='ip', rate='50/h', block=False), name='dispatch')
 class RetrieveDeleteView(generics.RetrieveDestroyAPIView):
     lookup_field = 'value'
     lookup_url_kwarg = 'string_value'
     serializer_class = StringSerializer
     queryset = String.objects.all()
+    
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request, 'limited', False):
+            return JsonResponse({
+                'detail': 'Too many requests.'
+            }, status=429)
+        return super().dispatch(request, *args, **kwargs)
     
     def get_object(self):
         try:
@@ -70,8 +88,16 @@ class RetrieveDeleteView(generics.RetrieveDestroyAPIView):
             raise NotFound("String does not exist in the system")
 
 
+@method_decorator(ratelimit(key='ip', rate='50/h', block=False), name='dispatch')
 class NaturalLanguageFilterView(APIView):
     
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request, 'limited', False):
+            return JsonResponse({
+                'detail': 'Too many requests.'
+            }, status=429)
+        return super().dispatch(request, *args, **kwargs)
+
     def parse_query(self, query):
         """
         Simple rule-based parser for natural language queries.
