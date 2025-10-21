@@ -37,7 +37,7 @@ class StringSerializer(serializers.ModelSerializer):
             'character_frequency_map': Counter(obj.value)
         }
     
-    def _check_duplicity(self, value: str) -> None:
+    def _check_duplicity(self, value):
         """
         Ensures the string does not already exist in the db.
         """
